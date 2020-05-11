@@ -1,0 +1,25 @@
+.team-heading {
+    background-color: coral;
+    color: floralwhite;
+}
+
+.card {
+    margin:3%;
+    padding: 1%;
+    width: 30%;
+    height: auto;
+    background-color: lightgray;
+    border-style: solid;
+    border-color: black;
+    border-width: 2pt;
+}
+
+h2 {
+    font-size: 300%;
+}
+
+.employeeInfo {
+    padding: 6%;
+    width: auto;
+    height: auto;
+}

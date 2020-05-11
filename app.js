@@ -1,0 +1,190 @@
+const inquirer = require("inquirer");
+const fs = require("fs");
+
+const Manager = require("./lib/Manager");
+const Engineer = require("./lib/Engineer");
+const Intern = require("./lib/Intern");
+//Install class constructors
+let employees = [];
+let IsThereAManager = false;
+var x = "";
+
+function render() {
+    inquirer
+        //prompt user for employee name, id number, email address, and title
+        .prompt([
+            {
+                type: "input",
+                name: "name",
+                message: "What is the name of the employee?",
+                validate: validateEmployeeName
+            },
+            {
+                type: "input",
+                name: "id",
+                message: "What is the id number of the employee?",
+                validate: validateOfficeNumber
+            },
+            {
+                type: "input",
+                name: "email",
+                message: "What is the email of the employee?",
+                validate: validateEmailAddress
+            },
+            {
+                type: "list",
+                name: "title",
+                message: "What is the title/role of the employee?",
+                choices: ["Manager", "Engineer", "Intern"]
+            }
+        ])
+        .then(res => {
+            //From the response, if title is manager then ask for office number
+            if (res.title === "Manager") {
+                //Check to see if a manager has already been assigned
+                if (IsThereAManager === false) {
+                    //If there is not a manager, set to there is a manager
+                    IsThereAManager = true;
+                    //Ask for Manager office number
+                    inquirer
+                        .prompt([
+                            {
+                                type: "input",
+                                name: "officeNumber",
+                                message: "Enter Manager's office number.",
+                                validate: validateOfficeNumber
+                            }
+                        ])
+                        //Use the second response to assign the managers office number to address
+                        .then(res_two => {
+                            const newManager = new Manager(res.name, res.id, res.email, res_two.officeNumber);
+                            employees.push(newManager);
+                            addPrintExit();
+                        })
+                } else {
+                    console.log("A manager has already been assigned.  Please try again.");
+                    render();
+                } // end of IsThereAManager if/else statement
+
+            } //End if for manager office number
+            else if (res.title === "Engineer") {
+                inquirer
+                    //Ask for Engineer's GitHub Profile ID 
+                    .prompt([
+                        {
+                            type: "input",
+                            name: "gitHubProfile",
+                            message: "Enter Engineer's GitHub profile username.",
+                            validate: validateGitHubUsername
+                        }
+                    ])
+                    .then(res_three => {
+                        const newEngineer = new Engineer(res.name, res.id, res.email, res_three.gitHubProfile);
+                        //console.log(newEngineer);
+                        employees.push(newEngineer);
+                        addPrintExit();
+                    })
+
+            } else if (res.title === "Intern") {
+                inquirer
+                    //Ask for intern's school name
+                    .prompt([
+                        {
+                            type: "input",
+                            name: "school",
+                            message: "Enter Employee's school name?",
+                            validate: validateEmployeeName
+                        }
+                    ])
+                    .then(res_four => {
+                        const newIntern = new Intern(res.name, res.id, res.email, res_four.school);
+                        employees.push(newIntern);
+                        addPrintExit();
+                    })
+            } // end of ifs
+        }) // end of .then
+    // Validation Functions  
+    function validateEmployeeName(input) {
+        //Check name to ensure it only contains letter and spaces
+        if (!input.match(/^[A-Z][A-Z ]{0,}/i)) {
+            return "Sorry, the employee's name must contain at least 1 character and must only contain letters and spaces!";
+        } else {
+            return true;
+        }
+    }
+    function validateOfficeNumber(input) {
+        //Ensure that office number only contains numbers
+        if (!input.match(/^[0-9]+$/)) {
+            return "Sorry, the office number must only contain numbers.";
+        } else {
+            return true;
+        }
+    }
+    function validateEmailAddress(input) {
+        //Ensure that the email address is in the proper format
+        if (!input.match(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i)) {
+            return "Sorry, the address you entered is not in the correct form";
+        } else {
+            return true;
+        }
+    }
+    function validateGitHubUsername(input) {
+        if (!input.match(/^[A-Z0-9_]+$/i)) {
+            return "Sorry, the Github username can only contain numbers and/or letters and/or _)";
+        } else {
+            return true;
+        }
+    }
+    // end of Input validation functions 
+
+    function addPrintExit() {
+        //console.log(employees);
+        inquirer
+            .prompt([
+                {
+                    type: "list",
+                    name: "nextStep",
+                    message: "Would you like to continue?",
+                    choices: ["Add another employee", "Save to HTML file", "Exit"]
+                }
+            ])
+            .then(res_five => {
+                if (res_five.nextStep == "Add another employee") {
+                    render();
+                }
+                else if (res_five.nextStep == "Save to HTML file") {
+                    fs.readFile("./templates/main.html", 'utf8', function (err, data) {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        x = x + data;
+                        //console.log(x);
+                        var cardString = [];
+                        for (let i = 0; i < employees.length; i++) {
+                            if (employees[i].getRole() === "Manager") {
+                                cardString = '<div class="card" id="managerCard"><div class="card-body"><div class="row" id="managerNameRow"><h2 id="managerName">' + employees[i].getName() + '</h2></div><div class="row" id="managerTitleRow"><h3 id="managerTitle">' + employees[i].getRole() + '</h3></div> <div class="row" id="managerDetails"><div class="employeeInfo"><div class="row" id="managerId">ID:  ' + employees[i].getId() + '</div><div class="row" id="managerEmail">Email:  ' + employees[i].getEmail() + '</div><div class="row" id="officeNum">Office Number:  ' + employees[i].getOfficeNumber() + '</div></div></div> </div></div>';
+                            } else if (employees[i].getRole() === "Engineer") {
+                                cardString = '<div class="card" id="engineerCard"><div class="card-body"><div class="row" id="engineerNameRow"><h2 id="engineerName">' + employees[i].getName() + '</h2></div><div class="row" id="engineerTitleRow"><h3 id="engineerTitle">' + employees[i].getRole() + '</h3></div> <div class="row" id="engineerDetails"><div class="employeeInfo"><div class="row" id="engineerId">ID:  ' + employees[i].getId() + '</div><div class="row" id="engineerEmail">Email:  ' + employees[i].getEmail() + '</div><div class="row" id="username">GitHub Username:  ' + employees[i].getGitHub() + '</div></div></div> </div></div>';
+                            } else if (employees[i].getRole() === "Intern") {
+                                cardString = '<div class="card" id="internCard"><div class="card-body"><div class="row" id="internNameRow"><h2 id="internName">' + employees[i].getName() + '</h2></div><div class="row" id="internTitleRow"><h3 id="internTitle">' + employees[i].getRole() + '</h3></div> <div class="row" id="internDetails"><div class="employeeInfo"><div class="row" id="internId">ID:  ' + employees[i].getId() + '</div><div class="row" id="internEmail">Email:  ' + employees[i].getEmail() + '</div><div class="row" id="school">School:  ' + employees[i].getSchool() + '</div></div></div> </div></div>';
+                            };
+                            x = x.concat(cardString);
+                            //console.log(x);
+                        }
+                        x = x.concat("</div></div></body></html>");
+                        //console.log(x);
+                        fs.writeFile('./output/team.html', x, function (err) {
+                            if (err) throw err;
+                            // console.log('Saved!');
+                        });//End of fs.writeFile 
+                        //}//end for loop
+                    });//end fs.readfile
+                }
+                else if (res_five.nextStep == "Exit") {
+                    process.exit();
+                }
+            }) // end inquire prompt/then
+    } // end addPrintExit function
+} // end function init
+//Call init to start program
+render();
